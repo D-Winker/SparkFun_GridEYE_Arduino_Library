@@ -50,7 +50,7 @@ void setup() {
   printArray(Serial.list());
   // Depending on where your GridEYE falls on this list, you
   // may need to change Serial.list()[0] to a different number
-  myPort = new Serial(this, Serial.list()[0], 115200);
+  myPort = new Serial(this, Serial.list()[1], 115200);
   myPort.clear();
   // Throw out the first chunk in case we caught it in the 
   // middle of a frame
@@ -72,17 +72,20 @@ void draw() {
   if(myPort.available() > 64){
   myString = myPort.readStringUntil(13);
   
-  // generate an array of strings that contains each of the comma
-  // separated values
-  String splitString[] = splitTokens(myString, ",");
   
-  // for each of the 64 values, map the temperatures between 20C and 40C
-  // to the blue through red portion of the color space
-  for(int q = 0; q < 64; q++){
-   
-    temps[q] = map(float(splitString[q]), 20, 40, 240, 360);
+    if (myString != null) {  // Prevents a null pointer exception. (Not sure why myString was coming back null though.)
+    // generate an array of strings that contains each of the comma
+    // separated values
+    String splitString[] = splitTokens(myString, ",");
     
-  }
+    // for each of the 64 values, map the temperatures between 20C and 40C
+    // to the blue through red portion of the color space
+    for(int q = 0; q < 64; q++){
+     
+      temps[q] = map(float(splitString[q]), 20, 40, 240, 360);
+      
+    }
+    }
   }
   
   
