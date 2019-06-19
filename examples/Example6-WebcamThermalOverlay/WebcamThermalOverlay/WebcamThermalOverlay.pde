@@ -4,7 +4,7 @@
   SparkFun Electronics
   Date: January 12th, 2018
   Modified by: Daniel Winker
-  Date: May 20, 2019
+  Date: June 18, 2019
   
   MIT License: Permission is hereby granted, free of charge, to any person obtaining a copy of this 
   software and associated documentation files (the "Software"), to deal in the Software without 
@@ -33,6 +33,7 @@
   
   Press 'a' on your keyboard to toggle autoscaling of temperature data.
   Press 'm' to toggle image mirroring.
+  Press 'w' to decrease thermal layer transparency, press 's' to increase transparency.
 */
 
 import processing.serial.*;
@@ -43,9 +44,10 @@ String myString = null;
 Serial myPort;  // The serial port
 float maxTemp = 40;  // Used for rescaling pixel colors
 float minTemp = 20;  // Used for rescaling pixel colors
-boolean autoScale = true;  // Scale the range using the current min and max temp, as opposed to fixed range.
+int autoScale = 1;  // Scale the range from 20 to 40C, or +/- 1 stdv from the mean, or between the min and max values read.
 boolean mirror = true;  // Mirror the images.
 float alpha = 0.8;  // Alpha parameter for an exponentially weighted moving average filter. Cuts down on noise in the thermal image.
+int thermAlpha = 150;
 int xStep;
 int yStep;
 int[] thermalCamSize = {0, 0};  // The width and height of the pixels of the Grid-EYE
@@ -145,18 +147,18 @@ void draw() {
       // Scale temperatures to +/- 1 standard deviation from the mean
       float meanTemp = mean(pixelVals);
       float stdev = stdv(pixelVals, meanTemp);
-      minTemp = meanTemp - stdev;
-      maxTemp = meanTemp + stdev;
       
       // for each of the 64 values, map the temperatures to the blue through red portion of the color space
       // if autoscaling, map the temperatures within +/-1 stdv to blue through red
       for (int yIter = 0; yIter < 8; yIter++) {
         for (int xIter = 0; xIter < 8; xIter++) {
-          if (autoScale) {
+          if (autoScale == 1) {  // Use mean +/- standard deviation
+            temps[xIter][yIter] = map(pixelVals[xIter + yIter * 8], meanTemp - stdev, meanTemp + stdev, 240, 360); 
+          } else if (autoScale == 2) { // Use minimum and maximum temperature values seen
             temps[xIter][yIter] = map(pixelVals[xIter + yIter * 8], minTemp, maxTemp, 240, 360); 
-          } else {
+          } else if (autoScale == 0) {  // Use 20 and 40 C
             temps[xIter][yIter] = map(pixelVals[xIter + yIter * 8], 20, 40, 240, 360); 
-          }
+          }           
         }
       }
     }
@@ -166,9 +168,9 @@ void draw() {
   for (int xIter = 0; xIter < 8; xIter++) {
     for (int yIter = 0; yIter < 8; yIter++) {
       if (mirror) {
-        fill(temps[7 - xIter][yIter], 100, 100, 150);  // R, G, B, Alpha
+        fill(temps[7 - xIter][yIter], 100, 100, thermAlpha);  // R, G, B, Alpha
       } else {
-        fill(temps[xIter][yIter], 100, 100, 150);  // R, G, B, Alpha
+        fill(temps[xIter][yIter], 100, 100, thermAlpha);  // R, G, B, Alpha
       }        
       rect(xIter * thermalCamSize[0],yIter * thermalCamSize[1], thermalCamSize[0], thermalCamSize[1]);
     }
@@ -178,11 +180,16 @@ void draw() {
 
 void keyPressed() {
   if (key == 'a') {
-    autoScale ^= true;
-    if (autoScale) {
-      println("Now autoscaling.");
-    } else {
-      println("Autoscaling off.");
+    autoScale += 1;
+    if (autoScale > 2) {
+      autoScale = 0;
+    }
+    if (autoScale == 0) {
+      println("Scaling thermal colors to 20 to 40C.");
+    } else if (autoScale == 1) {
+      println("Autoscaling colors to mean temperature +/-standard deviation .");
+    } else if (autoScale == 2) {
+      println("Autoscaling colors to min-max temperature range.");
     }
   }
   if (key == 'm') {
@@ -191,6 +198,16 @@ void keyPressed() {
       println("Now mirroring.");
     } else {
       println("Mirroring off.");
+    }
+  }
+  if (key == 'w') {
+    if (thermAlpha < 255) {
+      thermAlpha += 1;
+    }
+  }
+  if (key == 's') {
+    if (thermAlpha > 0) {
+      thermAlpha -= 1;
     }
   }
 }
