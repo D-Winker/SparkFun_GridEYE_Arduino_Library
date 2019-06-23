@@ -168,9 +168,9 @@ void draw() {
   for (int xIter = 0; xIter < 8; xIter++) {
     for (int yIter = 0; yIter < 8; yIter++) {
       if (mirror) {
-        fill(temps[7 - xIter][yIter], 100, 100, thermAlpha);  // R, G, B, Alpha
+        fill(temps[7 - xIter][yIter], 100, 100, thermAlpha);
       } else {
-        fill(temps[xIter][yIter], 100, 100, thermAlpha);  // R, G, B, Alpha
+        fill(temps[xIter][yIter], 100, 100, thermAlpha);
       }        
       rect(xIter * thermalCamSize[0],yIter * thermalCamSize[1], thermalCamSize[0], thermalCamSize[1]);
     }
