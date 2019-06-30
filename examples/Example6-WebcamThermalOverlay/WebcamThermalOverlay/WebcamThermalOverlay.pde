@@ -48,9 +48,8 @@ int autoScale = 1;  // Scale the range from 20 to 40C, or +/- 1 stdv from the me
 boolean mirror = true;  // Mirror the images.
 float alpha = 0.8;  // Alpha parameter for an exponentially weighted moving average filter. Cuts down on noise in the thermal image.
 int thermAlpha = 150;
-int xStep;
-int yStep;
 int[] thermalCamSize = {0, 0};  // The width and height of the pixels of the Grid-EYE
+float pixelVals[] = new float[64];  // An array of floats to hold our converted string values (so we can do some processing)
 
 float[][] temps = new float[8][8];
 
@@ -134,11 +133,9 @@ void draw() {
     // generate an array of strings that contains each of the comma separated values
     if (myString != null) {  // Prevents a null pointer exception. (Not sure why myString was coming back null though)
       String splitString[] = splitTokens(myString, ",");
-      // Generate an array of floats to hold our converted string values (so we can do some processing)
-      float pixelVals[] = new float[64];
       for(int q = 0; q < 64; q++){
         if (float(splitString[q]) != Float.NaN) {
-          pixelVals[q] = float(splitString[q]) * alpha + (1 - alpha) * pixelVals[q];
+          pixelVals[q] = alpha * float(splitString[q]) + (1 - alpha) * pixelVals[q];
         }
       }
       maxTemp = max(pixelVals);
@@ -204,10 +201,28 @@ void keyPressed() {
     if (thermAlpha < 255) {
       thermAlpha += 1;
     }
+    println("Alpha channel is ", thermAlpha);
   }
   if (key == 's') {
     if (thermAlpha > 0) {
       thermAlpha -= 1;
     }
+    println("Alpha channel is ", thermAlpha);
+  }
+  if (key == 'e') {
+    if (alpha < 1.0) {
+      alpha += 0.01;
+    } else {
+      alpha = 1.0;
+    }
+    println("Filter alpha is ", alpha);
+  }
+  if (key == 'd') {
+    if (alpha > 0.0) {
+      alpha -= 0.01;
+    } else {
+      alpha = 0.0;
+    }
+    println("Filter alpha is ", alpha);
   }
 }
